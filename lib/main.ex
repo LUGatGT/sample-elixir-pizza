@@ -6,7 +6,13 @@ defmodule Main do
   def start(_type, _args) do
     import Supervisor.Spec
 
+    # this now becomes a supervision tree, a tree can
+    # either contain apps, tasks, whatever to be supervised
+    # or another supervisor
     children = [
+      supervisor(Task.Supervisor, [
+        [name: Server.TaskSupervisor]
+      ]),
       worker(Task, [Server, :accept, [8080]])
     ]
     opts = [

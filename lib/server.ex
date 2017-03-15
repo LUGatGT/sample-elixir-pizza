@@ -22,7 +22,18 @@ defmodule Server do
 
   defp loop_acceptor(socket) do
     {:ok, client} = :gen_tcp.accept(socket)
-    serve(client)
+
+    # start a `Task.Supervisor`
+    # allows the whole server not to crash if this does
+    # allows many connections at once
+    # such a common pattern there's a Task.Supervisor module
+    {:ok, pid} = Task.Supervisor.start_child(
+      Server.TaskSupervisor,  # process name
+      fn -> serve(client) end # process function
+    )
+    # move the socket's controlling process to be `pid`
+    :ok = :gen_tcp.controlling_process(client, pid)
+
     loop_acceptor(socket)
   end
 
